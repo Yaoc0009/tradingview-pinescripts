@@ -1,0 +1,28 @@
+//@version=5
+strategy("Supertrend-EMA Long Strategy", overlay=true, initial_capital=1000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+atrPeriod = input(10, "ATR Length")
+factor = input.float(3.0, "Factor", step=0.01)
+slowLength = input.int(200, "Slow MA Length", minval=1)
+
+slowEMA = ta.ema(close,slowLength)
+plot(slowEMA, color=color.yellow) 
+
+[supertrend, direction] = ta.supertrend(factor, atrPeriod)
+plot(direction < 0 ? supertrend : na, "Up direction", color = color.green, style=plot.style_linebr)
+plot(direction < 0 ? na : supertrend, "Down direction", color = color.red, style=plot.style_linebr)
+
+if ta.change(direction) < 0 and close > slowEMA
+    strategy.entry("Long", strategy.long)
+if ta.change(direction) > 0 and close < slowEMA
+    strategy.entry("Short", strategy.short)
+    
+exitLong = close < supertrend
+exitShort = close > supertrend
+
+// Exit trades
+if (exitLong)
+    strategy.close(id="Long")
+if (exitShort)
+    strategy.close(id="Short")
+
